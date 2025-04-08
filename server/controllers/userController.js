@@ -1,9 +1,38 @@
 const pool = require("../db");
+const QueryStream = require('pg-query-stream')
+// const JSONStream = require('JSONStream')
 
 exports.getUsers = async (req, res) => {
   try {
-    const query = "SELECT * FROM stream_users";
-    const result = await pool.query(query);
+  const query = new QueryStream('SELECT * FROM stream_users');
+    const stream = await pool.query(query);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Connection', 'keep-alive');
+    res.write('[');
+    let isFirst = true;
+
+    stream.on('data',(row)=>{
+      if(!isFirst){
+        res.write(',');
+      }else{
+        isFirst = false;
+      }
+      res.write(JSON.stringify(row))
+    });
+
+    stream.on('end',()=>{
+      res.write(']');
+      res.end();
+      pool.release();
+    })
+
+    stream.on('error',(err)=>{
+      console.log('Stream error:',err);
+      res.status(500).json({error:'Error fetching data from database'})
+      pool.release();
+    })
 
     res.status(200).json({
       result: result.rows,

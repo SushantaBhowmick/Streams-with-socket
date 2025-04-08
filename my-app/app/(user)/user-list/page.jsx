@@ -8,10 +8,25 @@ const UserList = () => {
   const [users, setUsers] = useState([]);
   useEffect(() => {
     const fetchUser = async () => {
-      await axios.get("http://localhost:4000/api/users").then((res) => {
-        console.log(res);
-        setUsers(res.data.result);
-      });
+      // await axios.get("http://localhost:4000/api/users").then((res) => {
+      //   console.log(res);
+      //   setUsers(res.data.result);
+      // });
+      const res = await fetch("http://localhost:4000/api/users"); // Server-side
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      let result = "";
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        result += new decoder.decode(value, { stream: true });
+      }
+
+      const users = JSON.parse(result);
+      console.log(users);
+      setUsers(users);
     };
     fetchUser();
 
@@ -29,7 +44,7 @@ const UserList = () => {
 
     return () => {
       socket.off("userCreated"); // Cleanup on unmount
-      socket.off('userUpdated');
+      socket.off("userUpdated");
     };
   }, []);
   return (

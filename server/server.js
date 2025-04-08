@@ -4,7 +4,7 @@ const addUser = require('./constant/addUser');
 const cors = require('cors')
 const userRoutes = require('./routes/userRoutes')
 // const createUserTable = require('./constant/createTable');
-// addUser(5)
+// addUser(50000)
 
 const app = express();
 const PORT =4000;
