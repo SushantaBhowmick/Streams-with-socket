@@ -4,45 +4,40 @@ const QueryStream = require('pg-query-stream')
 
 exports.getUsers = async (req, res) => {
   try {
-  const query = new QueryStream('SELECT * FROM stream_users');
-    const stream = await pool.query(query);
+    const client = await pool.connect();
+    const query = new QueryStream('SELECT * FROM stream_users');
+    const stream = client.query(query);
 
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Transfer-Encoding', 'chunked');
-    res.setHeader('Connection', 'keep-alive');
     res.write('[');
+
     let isFirst = true;
 
-    stream.on('data',(row)=>{
-      if(!isFirst){
-        res.write(',');
-      }else{
-        isFirst = false;
-      }
-      res.write(JSON.stringify(row))
+    stream.on('data', (row) => {
+      if (!isFirst) res.write(',');
+      else isFirst = false;
+
+      res.write(JSON.stringify(row));
     });
 
-    stream.on('end',()=>{
+    stream.on('end', () => {
       res.write(']');
       res.end();
-      pool.release();
-    })
-
-    stream.on('error',(err)=>{
-      console.log('Stream error:',err);
-      res.status(500).json({error:'Error fetching data from database'})
-      pool.release();
-    })
-
-    res.status(200).json({
-      result: result.rows,
+      client.release();
     });
+
+    stream.on('error', (err) => {
+      console.error('Stream error:', err);
+      client.release();
+      res.status(500).end('Internal Server Error');
+    });
+
   } catch (error) {
-    res.status(500).json({
-      error,
-    });
+    console.error('Catch error:', error);
+    res.status(500).json({ error: 'Unexpected server error' });
   }
 };
+
 
 exports.createUsers = async (req, res) => {
   try {

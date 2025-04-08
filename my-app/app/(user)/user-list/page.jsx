@@ -21,7 +21,7 @@ const UserList = () => {
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
-        result += new decoder.decode(value, { stream: true });
+        result += decoder.decode(value, { stream: true });
       }
 
       const users = JSON.parse(result);
