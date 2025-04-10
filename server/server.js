@@ -40,7 +40,7 @@ app.use('/api',userRoutes)
 
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('a user connected',socket.id);
 
   let currentTimeout = null;
   let isStreaming = false;
@@ -51,10 +51,10 @@ io.on('connection', (socket) => {
     if (!isStreaming) return; // exit if stream was stopped
 
     try {
-      let query = `SELECT * FROM users LIMIT ${chunkSize} OFFSET ${offset}`;
+      let query = `SELECT * FROM stream_users LIMIT ${chunkSize} OFFSET ${offset}`;
       if(id){
 
-        query = `SELECT * FROM users where id>0 AND id<100 LIMIT ${chunkSize} OFFSET ${offset}`
+        query = `SELECT * FROM stream_users where id>0 AND id<100 LIMIT ${chunkSize} OFFSET ${offset}`
       }
       const result = await pool.query(query);
       const rows = result.rows;
